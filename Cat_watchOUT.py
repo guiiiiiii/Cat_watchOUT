@@ -6,6 +6,7 @@ from time import sleep
 
 WHITE=(255,255,255)
 RED=(255,0,0)
+BLACK=(0,0,0)
 
 pad_width=480
 pad_height=640
@@ -13,11 +14,11 @@ pad_height=640
 cat_width=62
 cat_height=79
 
-life_width=62
-life_height=60
+life_width=48
+life_height=56
 
-enemy_width=33
-enemy_height=35
+enemy_width=38
+enemy_height=40
 
 heart_width=28
 heart_height=23
@@ -34,7 +35,7 @@ def drawScore(count):
 
     global gamepad
 
-    font = pygame.font.SysFont(None, 20)
+    font = pygame.font.Font('AmaticSC-Regular.ttf', 20)
 
     text = font.render('Score:' + str(count*30), True, WHITE)
 
@@ -44,7 +45,7 @@ def drawPass(passed):
 
     global gamepad
 
-    font = pygame.font.SysFont(None, 20)
+    font = pygame.font.Font('AmaticSC-Regular.ttf', 20)
 
     text = font.render('Passed:' + str(passed), True, RED)
 
@@ -52,52 +53,66 @@ def drawPass(passed):
 
 
 
-def dispMessage(text):
+def dispMessage(text,x,y):
 
     global gamepad
 
-    textfont = pygame.font.Font('freesansbold.ttf', 80)
+    font = pygame.font.Font('AmaticSC-Regular.ttf', 60)
 
-    text = textfont.render(text, True, RED)
+    text = font.render(text, True, BLACK)
 
-    textpos = text.get_rect()
-
-    textpos.center = (pad_width/2, pad_height/2)
-
-    gamepad.blit(text,textpos)
+    gamepad.blit(text,(x,y))
 
     pygame.display.update()
 
-    sleep(2)
 
-    #game_intro()
+def gameover(count,passed):
 
-def gameover():
+    global gamepad, scoreboard
 
-    global gamepad
+    drawObject(scoreboard,pad_width/8,pad_height/7)
 
-    dispMessage('Game Over')
+    #scoreboard화면위에 사용자의 점수와 놓친 우유의 갯수 표기
+    
+    dispMessage(str(count*30),pad_width/2-25,pad_height/3+40)
+    dispMessage(str(passed),pad_width*3/5,pad_height*5/7-15)
+    
+    sleep(3) #3초동안 화면을 보여준 뒤 초기화면으로 되돌아감
     game_intro()
 
-def game_intro():
-    global pamepad , title
+def game_intro(): #메인(초기)화면
+    global gamepad , title
 
     intro = True
 
     while intro:
         for event in pygame.event.get():
-            #print(event)  #이거넣으면 마우스 위치랑 이것저것 다 보여줌
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT: #오른쪽 위 x누르면 프로그램 종료
                 pygame.quit()
                 quit()
             elif event.type ==pygame.KEYDOWN:
-                if event.key==pygame.K_UP:
-                    runGame()      
+                if event.key==pygame.K_s:
+                    runGame()
+                elif event.key==pygame.K_t:
+                    aboutgame()
+                elif event.key==pygame.K_q: #q키를 누르면 프로그램 종료
+                    pygame.quit()
+                    quit()
+
+        #게임화면을 채우고 업데이트       
         gamepad.fill(WHITE)
         drawObject(title,0,0)
 
         pygame.display.update()
         clock.tick(15)
+
+def aboutgame():
+    global gamepad, about
+
+    drawObject(about,0,0)
+    pygame.display.update()
+    sleep(5)
+    game_intro()
                    
 #게임 실행
 def runGame():
@@ -107,10 +122,10 @@ def runGame():
     check=False #충돌했을때 True로 설정되는 플래그
     checkL=False
     lifecount=5
-    drawshock=0
+    #drawshock=0
     passed=0
     score=0
-    j=0
+   # j=0
     
     x=pad_width /2  # 중앙에서 시작하게 함
     y=pad_height /2
@@ -118,7 +133,7 @@ def runGame():
     x_change=0  #방향키를 조작할때 움직이게 하는 정도를 정의
     y_change=0
 
-    enemy_x=random.randrange(0,pad_width-enemy_width) #적 가로픽셀 측정해서 범위지정
+    enemy_x=random.randrange(0,pad_width-enemy_width) #enemy와 life가 화면을 벗어나지 않도록 조정
     enemy_y=0
     
     life_x=random.randrange(0,pad_width-life_width)
@@ -134,14 +149,14 @@ def runGame():
             if event.type==pygame.QUIT:
                 crashed=True
 
-            #키누를때 동작 설정 -누르면 움직이고 떼면 멈춤-
+            #키누를때 동작 설정 -누르면 움직이고 떼면 멈추게 할것-
             if event.type==pygame.KEYDOWN:
                 
                 if event.key==pygame.K_UP:
                     y_change-=5
                 elif event.key==pygame.K_DOWN:
                     y_change+=5
-                elif event.key==pygame.K_RIGHT:
+                elif event.key==pygame.K_RIGHT: #우리의 gamepad는 세로가 더 긴 모양이므로 x축의 움직임을 더 빠르게 설계
                     x_change+=7
                 elif event.key==pygame.K_LEFT:
                     x_change-=7
@@ -180,6 +195,7 @@ def runGame():
         if y<enemy_y+enemy_height:
             if(enemy_x > x and enemy_x < x + cat_width) or ( enemy_x + enemy_width > x and enemy_x + enemy_width < x + cat_width):
                 check=True
+                
         #적위치 조정
         enemy_y +=5
 
@@ -222,11 +238,11 @@ def runGame():
 
 
         if passed==5:
-            gameover()
+            gameover(score,passed)
 
 
         if lifecount == 0:
-            gameover()
+            gameover(score,passed)
 
         
        
@@ -245,23 +261,23 @@ def runGame():
     quit()
 
 def initGame():
-    global gamepad, cat, clock, background , title
+    global gamepad, cat, clock, background , title, scoreboard, about
     global enemy,life, heart, shock
 
     
     pygame.init()
     gamepad=pygame.display.set_mode((pad_width,pad_height))
-    pygame.display.set_caption('Cat_watchOUT')
+    pygame.display.set_caption('Term_Project')
     
     cat=pygame.image.load('C:\\test\\cat.png')
     background=pygame.image.load('C:\\test\\background.png')
-    
     title=pygame.image.load('C:\\test\\title.png')
+    scoreboard=pygame.image.load('C:\\test\\scoreboard.png')
+    about=pygame.image.load('C:\\test\\about.png')
     enemy=pygame.image.load('C:\\test\\lemon.png')
     life=pygame.image.load('C:\\test\\milk.png')
     heart=pygame.image.load('C:\\test\\life.png')
     shock=pygame.image.load('C:\\test\\shock.png')
-    
     
     
     clock=pygame.time.Clock()
